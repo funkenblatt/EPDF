@@ -20,12 +20,14 @@ I'm concentrating on that last bullet item at the moment.
 At the moment, one thing it can be made to do is display a particular
 PDF document's outline in outline-mode format, allowing you to use whatever
 outline-mode key bindings may exist, while also allowing you to jump to
-the proper page by hitting Enter.  A screenshot of this functionality
-is shown `here`_.
+the proper page by hitting Enter.  
 
 Currently, the way to bring up this functionality is to open up your
 document in doc-view, and then eval (pdf-outlines (pdf-init)), where
 (pdf-init) returns a document structure, and pdf-outlines dumps the
 outlines into a buffer and activates outline-mode.
+
+A screenshot of this functionality
+is shown `here`_.
 __
 .. _here: http://jason.ozbert.com/images/pdf_outline.png
