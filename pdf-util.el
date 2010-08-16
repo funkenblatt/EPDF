@@ -156,3 +156,5 @@ to whatever page it happens to be linked to."
   "PDF Outline mode.  Uses the same navigation shortcuts as
 `outline-mode', but also lets you jump to pages within a PDF
 document that has been opened with docview.")
+
+(provide 'pdf-util)
