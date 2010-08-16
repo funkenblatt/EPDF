@@ -78,10 +78,13 @@ like true, false, and null, etc."
 	      (cdr (assoc (match-string 0) depth-incs)))))
     (replace-regexp-in-string
      (rx "\\" (or (repeat 3 (any (?0 . ?9)))
-		  (any "ntrbf()\\")))
+		  (any "\nntrbf()\\")))
      (lambda (m)
-       (read (concat "\"" m "\"")))
-     (buffer-substring start (- (point) 1)))))
+       (if (string= m "\\\n")
+	   ""
+	 (read (concat "\"" m "\""))))
+     (buffer-substring start (- (point) 1))
+     nil t)))
 
 (defun pdf-skipws ()
   (skip-chars-forward

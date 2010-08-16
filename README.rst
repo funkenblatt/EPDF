@@ -13,6 +13,7 @@ Things it does not do:
 
 * Work in a robust manner
 * Handle character encodings
+* Deal with encrypted documents of any kind
 * Anything particularly useful
 
 I'm concentrating on that last bullet item at the moment.
