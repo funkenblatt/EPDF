@@ -15,13 +15,15 @@
   (v)
   (doc))
 
-
 (defmacro pdf-chr (s) 
   "Converts a string literal into an integer literal.  Mainly used because
 ?( screws up emacs's paren matching."
   (aref s 0))
 
 (defun pdf-read-n (n)
+  "Returns a compiled function object that reads in N characters
+and returns whatever that was.  Usually used for snarfing symbols
+like true, false, and null, etc."
   (byte-compile
    `(lambda (doc)
       (prog1
@@ -81,6 +83,8 @@
   (point))
 
 (defun pdf-grab-til-char (doc c)
+  "Keep reading in PDF objects until the character C is encountered.
+Also handles indirect object references."
   (let (out)
     (while (/= (char-after (point)) c)
       (push (pdf-read doc) out)
@@ -116,6 +120,10 @@
     (list 'hex (buffer-substring start end))))
 
 (defun pdf-dref (dict key &optional noderef noread)
+  "Retreive an item from a PDF dict.  If the value stored
+there is an indirect reference, dereference it, unless
+NODEREF is non-nil.  NOREAD is forwarded to `pdf-getxref',
+which see."
   (let ((out (cdr (assq key (pdf-dict-alist dict)))))
     (if (and (pdf-objref-p out)
 	     (not noderef))
@@ -123,10 +131,12 @@
       out)))
 
 (defun pdf-objref-p (x)
+  "Is this an indirect object reference?"
   (and (consp x)
        (eq (car x) 'R)))
 
 (defun pdf-aref (arr ix &optional noderef noread)
+  "Kind of like `pdf-dref', but for arrays."
   (let ((out (aref (pdf-array-v arr) ix)))
     (if (and (pdf-objref-p out)
 	     (not noderef))
@@ -134,6 +144,7 @@
       out)))
 
 (defun pdf-xrefs (doc)
+  "Retreive the document's cross reference tables."
   (read (current-buffer)) 		;skip "xref" token
   (let ((segments `((,(pdf-read doc) ,(pdf-read doc) ,(pdf-skipws))))
 	trailer)
@@ -154,7 +165,7 @@
 
 (defun pdf-getxref (doc objref &optional noread)
   "Retreive indirect object reference OBJREF for document
-DOC.  If noread is non-nil, return the buffer offset of the
+DOC.  If NOREAD is non-nil, return the buffer offset of the
 object instead of actually reading it."
   (when (not (pdf-doc-objs doc))
     (setf (pdf-doc-objs doc) (make-hash-table :test 'equal)))
@@ -184,6 +195,9 @@ object instead of actually reading it."
 	    val))))))
 
 (defun pdf-init ()
+  "Creates a pdf-doc structure.  Initializes the cross-reference table
+slot and finds the document catalog, which is required for doing just 
+about anything else with the document."
   (let ((out (make-pdf-doc :buf (current-buffer))))
     (save-excursion
       (goto-char (point-max))
