@@ -132,6 +132,8 @@ the numerical page index of PAGE."
     (+ index 1)))
 
 (defun pdf-outline-goto ()
+  "Looks up the outline object property at point, and goes
+to whatever page it happens to be linked to."
   (interactive)
   (let* ((o (get-text-property (point) 'outline-obj))
 	 (doc (pdf-dict-doc o))
