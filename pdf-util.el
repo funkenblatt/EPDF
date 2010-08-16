@@ -32,6 +32,7 @@
    (lambda (x depth)
      (when (pdf-dref x '/Title)
        (dotimes (i depth) (pdf-dump "*"))
+       (dotimes (i depth) (pdf-dump " "))
        (pdf-dump (pdf-dref x '/Title))
        (add-text-properties (line-beginning-position)
 			    (line-end-position)

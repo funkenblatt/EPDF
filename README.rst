@@ -23,5 +23,9 @@ outline-mode key bindings may exist, while also allowing you to jump to
 the proper page by hitting Enter.  A screenshot of this functionality
 is shown `here`_.
 
+Currently, the way to bring up this functionality is to open up your
+document in doc-view, and then eval (pdf-outlines (pdf-init)), where
+(pdf-init) returns a document structure, and pdf-outlines dumps the
+outlines into a buffer and activates outline-mode.
 __
 .. _here: http://jason.ozbert.com/images/pdf_outline.png
