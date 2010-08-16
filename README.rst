@@ -29,5 +29,6 @@ outlines into a buffer and activates outline-mode.
 
 A screenshot of this functionality
 is shown `here`_.
+
 __
 .. _here: http://jason.ozbert.com/images/pdf_outline.png
