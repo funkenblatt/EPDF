@@ -21,7 +21,7 @@ At the moment, one thing it can be made to do is display a particular
 PDF document's outline in outline-mode format, allowing you to use whatever
 outline-mode key bindings may exist, while also allowing you to jump to
 the proper page by hitting Enter.  A screenshot of this functionality
-is shown in this `screenshot`_.
+is shown `here`_.
 
 __
-.. _screenshot: http://jason.ozbert.com/images/pdf_outline.png
+.. _here: http://jason.ozbert.com/images/pdf_outline.png
