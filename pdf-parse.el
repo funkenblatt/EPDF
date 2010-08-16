@@ -16,8 +16,8 @@
   (doc))
 
 (defmacro pdf-chr (s) 
-  "Converts a string literal into an integer literal.  Mainly used because
-?( screws up emacs's paren matching."
+  "Converts a string literal into an integer literal.  Mainly used 
+because ?( screws up emacs's paren matching."
   (aref s 0))
 
 (defun pdf-read-n (n)
@@ -175,24 +175,25 @@ object instead of actually reading it."
 	val)
     (if (and obj (not noread))
 	obj
-      (while (and xrefs
-		  (not (and (>= objnum (caar xrefs))
-			    (< objnum (+ (caar xrefs)
-					 (cadar xrefs))))))
-	(pop xrefs))
-      (if (not xrefs)
-	  'null
-	(setq xrefs (car xrefs))
-	(save-excursion
-	  (goto-char (caddr xrefs))
-	  (forward-char (* (- objnum (car xrefs)) 20))
-	  (goto-char (+ (point-min) (pdf-read doc)))
-	  (search-forward "obj")
-	  (if noread
-	      (point)
-	    (setq val (pdf-read doc))
-	    (puthash objref val (pdf-doc-objs doc))
-	    val))))))
+      (with-current-buffer (pdf-doc-buf doc)
+	(while (and xrefs
+		    (not (and (>= objnum (caar xrefs))
+			      (< objnum (+ (caar xrefs)
+					   (cadar xrefs))))))
+	  (pop xrefs))
+	(if (not xrefs)
+	    'null
+	  (setq xrefs (car xrefs))
+	  (save-excursion
+	    (goto-char (caddr xrefs))
+	    (forward-char (* (- objnum (car xrefs)) 20))
+	    (goto-char (+ (point-min) (pdf-read doc)))
+	    (search-forward "obj")
+	    (if noread
+		(point)
+	      (setq val (pdf-read doc))
+	      (puthash objref val (pdf-doc-objs doc))
+	      val)))))))
 
 (defun pdf-init ()
   "Creates a pdf-doc structure.  Initializes the cross-reference table
@@ -209,3 +210,5 @@ about anything else with the document."
 	(setf (pdf-doc-xrefs out) (aref junk 1)
 	      (pdf-doc-catalog out) (pdf-dref trailer '/Root)))
       out)))
+
+(provide 'pdf-parse)
