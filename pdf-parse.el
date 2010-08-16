@@ -76,7 +76,12 @@ like true, false, and null, etc."
       (unless (= (char-before (match-beginning 0)) ?\\)
 	(incf depth
 	      (cdr (assoc (match-string 0) depth-incs)))))
-    (buffer-substring start (- (point) 1))))
+    (replace-regexp-in-string
+     (rx "\\" (or (repeat 3 (any (?0 . ?9)))
+		  (any "ntrbf()\\")))
+     (lambda (m)
+       (read (concat "\"" m "\"")))
+     (buffer-substring start (- (point) 1)))))
 
 (defun pdf-skipws ()
   (skip-chars-forward
