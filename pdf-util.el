@@ -7,16 +7,17 @@
   (mapc (lambda (x) (princ x (current-buffer))) args))
 
 (defun pdf-outlines (doc)
-  (let* ((buf (get-buffer-create "*Outlines*")))
-    (with-current-buffer buf
-      (setq buffer-read-only nil)
-      (erase-buffer)
-      (pdf-dump-outlines doc)
-      (goto-char (point-min))
-      (outline-mode)
-      (call-interactively 'hide-sublevels)      
-      (setq buffer-read-only t))
-    (pop-to-buffer buf)))
+  (if (pdf-dref (pdf-doc-catalog doc) '/Outlines)
+      (let* ((buf (get-buffer-create "*Outlines*")))
+	(with-current-buffer buf
+	  (setq buffer-read-only nil)
+	  (erase-buffer)
+	  (pdf-dump-outlines doc)
+	  (goto-char (point-min))
+	  (pdf-outline-mode)
+	  (call-interactively 'hide-sublevels)      
+	  (setq buffer-read-only t))
+	(pop-to-buffer buf))))
 
 (defun pdf-map-outlines (proc outlines &optional depth)
   (if (not depth) (setq depth 0))
@@ -141,3 +142,17 @@ to whatever page it happens to be linked to."
     (pop-to-buffer buf)
     (doc-view-goto-page
      (pdf-outline-page o))))
+
+(defvar pdf-outline-mode-map
+  (let ((km (make-sparse-keymap)))
+    (set-keymap-parent km outline-mode-map)
+    (define-key km (kbd "RET") 'pdf-outline-goto)
+    km))
+
+(define-derived-mode
+  pdf-outline-mode
+  outline-mode
+  "PDF Outline"
+  "PDF Outline mode.  Uses the same navigation shortcuts as
+`outline-mode', but also lets you jump to pages within a PDF
+document that has been opened with docview.")
