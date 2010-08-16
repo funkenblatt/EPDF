@@ -1,3 +1,6 @@
+(eval-when-compile
+  (require 'cl))
+
 (require 'pdf-parse)
 
 (defun pdf-dump (&rest args)
@@ -47,10 +50,10 @@
 	     dest))
       (puthash dest out (pdf-doc-names doc)))))
 
-(defun pdf-arrayfind (proc array)
+(defun pdf-arrayfind (proc array &optional deref)
   (catch 'break
     (dotimes (i (pdf-arraylen array))
-      (if (funcall proc (pdf-aref array i))
+      (if (funcall proc (pdf-aref array i (not deref)))
 	  (throw 'break i)))))
 
 (defun string-between (s l u)
@@ -61,7 +64,7 @@
    (string= s u)))
 
 (defun pdf-nametree-ref (ntree name)
-  "Dereference a named destination."
+  "Lookup a name in a name tree"
   (let (kids limits ubound lbound ix)
     (catch 'break
       (while t
@@ -76,9 +79,63 @@
 		       kids))
 		(setq ntree (pdf-aref kids ix))
 	      (throw 'break nil))
-	  (setq kids (pdf-dref ntree '/Names))
-	  (setq ix (pdf-arrayfind (lambda (kid)
+	  (setq kids (pdf-dref ntree '/Names)
+		ix (pdf-arrayfind (lambda (kid)
 				    (if (stringp kid)
 					(string= kid name)))
 				  kids))
 	  (throw 'break (pdf-aref kids (+ ix 1))))))))
+
+(defun pdf-outline-page (outline)
+  "Find the page number that a particular outline entry
+refers to."
+  (let ((dest (or (pdf-dref outline '/Dest)
+		  (pdf-dref (pdf-dref outline '/A)
+			    '/D)))
+	doc)
+    (when (stringp dest)
+      (setq dest 
+	    (pdf-lookup-dest
+	     (pdf-dict-doc outline)
+	     dest)))
+    (cond
+     ((pdf-array-p dest) (setq doc (pdf-array-doc dest)
+			       dest (pdf-aref dest 0 t)))
+     ((pdf-dict-p dest) (setq doc (pdf-dict-doc dest)
+			      dest (pdf-aref
+				    (pdf-dref dest '/D) 0 t))))
+    (pdf-find-pageno doc dest)))
+
+(defun pdf-find-pageno (doc page)
+  "Takes document DOC and indirect reference PAGE, and finds
+the numerical page index of PAGE."
+  (let* ((index 0)
+	 (node (pdf-getxref doc page))
+	 tmp)
+    (while node
+      (if (eq (pdf-dref node '/Type) '/Page)
+	  (setq index 
+		(pdf-arrayfind
+		 (lambda (kid)
+		   (equal kid page))
+		 (pdf-dref (pdf-dref node '/Parent) '/Kids))
+		node (pdf-dref node '/Parent))
+	(when (pdf-dref node '/Parent)
+	  (pdf-arrayfind
+	   (lambda (kid)
+	     (unless (eq kid node)
+	       (incf index (pdf-dref kid '/Count)))
+	     (eq kid node))
+	   (pdf-dref (pdf-dref node '/Parent) '/Kids)
+	   t))
+	(setq node (pdf-dref node '/Parent))))
+    (+ index 1)))
+
+(defun pdf-outline-goto ()
+  (interactive)
+  (let* ((o (get-text-property (point) 'outline-obj))
+	 (doc (pdf-dict-doc o))
+	 (buf (pdf-doc-buf doc)))
+    (pop-to-buffer buf)
+    (doc-view-goto-page
+     (pdf-outline-page o))))

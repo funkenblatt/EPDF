@@ -163,8 +163,8 @@ which see."
 		segments))))
     (read (current-buffer)) 		;skip "trailer" token
     (setq trailer (pdf-read doc))
-    (when (pdf-dref trailer 'Prev)
-      (goto-char (pdf-dref trailer 'Prev))
+    (when (pdf-dref trailer '/Prev)
+      (goto-char (pdf-dref trailer '/Prev))
       (setq segments (append segments (aref (pdf-xrefs doc) 1))))
     (vector trailer segments)))
 
