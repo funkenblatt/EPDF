@@ -77,7 +77,7 @@
 			       lbound (pdf-aref limits 0)
 			       ubound (pdf-aref limits 1))
 			 (string-between name lbound ubound))
-		       kids))
+		       kids t))
 		(setq ntree (pdf-aref kids ix))
 	      (throw 'break nil))
 	  (setq kids (pdf-dref ntree '/Names)
@@ -147,7 +147,8 @@ to whatever page it happens to be linked to."
   (let ((km (make-sparse-keymap)))
     (set-keymap-parent km outline-mode-map)
     (define-key km (kbd "RET") 'pdf-outline-goto)
-    km))
+    km)
+  "Keymap for pdf-outline viewer.")
 
 (define-derived-mode
   pdf-outline-mode
