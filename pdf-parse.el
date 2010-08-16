@@ -5,7 +5,8 @@
   (xrefs)
   (catalog)
   (objs)
-  (buf))
+  (buf)
+  (names))
 
 (defstruct (pdf-dict)
   (alist)
@@ -100,7 +101,11 @@ Also handles indirect object references."
   (pdf-skipws)
   (let ((out (pdf-grab-til-char doc (pdf-chr "]"))))
     (forward-char)
-    (apply 'vector (nreverse out))))
+    (make-pdf-array :v (apply 'vector (nreverse out))
+		    :doc doc)))
+
+(defun pdf-arraylen (a)
+  (length (pdf-array-v a)))
 
 (defun pdf-readdict (doc)
   (forward-char 2)
