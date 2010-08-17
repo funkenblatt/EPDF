@@ -69,13 +69,15 @@ like true, false, and null, etc."
 (defun pdf-readstr (doc)
   (forward-char 1)
   (let ((start (point))
-	(depth 1) 
-	(depth-incs '(("(" . 1) (")" . -1))))
+	(depth 1))
     (while (> depth 0)
-      (re-search-forward "[()]")
-      (unless (= (char-before (match-beginning 0)) ?\\)
+      (re-search-forward
+       (rx (or (: "\\" (or (repeat 3 (any (?0 . ?9)))
+			   (any "\nntbrf()\\")))
+	       (any "()"))))
+      (unless (= (aref (match-string 0) 0) ?\\)
 	(incf depth
-	      (cdr (assoc (match-string 0) depth-incs)))))
+	      (if (equal (match-string 0) "(") 1 -1))))
     (replace-regexp-in-string
      (rx "\\" (or (repeat 3 (any (?0 . ?9)))
 		  (any "\nntrbf()\\")))
