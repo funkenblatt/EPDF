@@ -48,8 +48,9 @@ is equivalent to
        (dotimes (i depth) (pdf-dump "*"))
        (dotimes (i depth) (pdf-dump " "))
        (let ((title (pdf-dref x '/Title)))
-	 (if (string= (substring title 0 2)
-		      "\xfe\xff")	;Check for byte-order mark
+	 (if (and (> (length title) 1)
+		  (string= (substring title 0 2)
+		      "\xfe\xff"))	;Check for byte-order mark
 	     (setq title (decode-coding-string title 'utf-16)))
 	 (pdf-dump title))
        (add-text-properties (line-beginning-position)
