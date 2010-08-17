@@ -1,3 +1,40 @@
+;;; pdf-parse.el --- pdf parsing routines
+
+;; Copyright (C) 2010 Jason Feng
+
+;; Author: Jason Feng <jfeng1985@gmail.com>
+;; Maintainer: Jason Feng <jfeng1985@gmail.com>
+;; Created: 15 Aug 2010
+;; Keywords: docview pdf outline
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+;;; Commentary:
+;; This code handles parsing of basic PDF data structures.  For doing
+;; more useful things, see pdf-util.el.
+
+;; Main entry point for usage is (`pdf-init'), called with some PDF
+;; file as the current buffer.  The return value is a pdf-doc struct,
+;; with which various useful things can in theory be done.
+
+;; This code is intended to be used with doc-view.  If doc-view doesn't
+;; exist, this code will not necessarily fail, but certainly won't be
+;; very useful.
+
+;;; Code:
+
 (eval-when-compile
   (require 'cl))
 
@@ -229,3 +266,5 @@ about anything else with the document."
       out)))
 
 (provide 'pdf-parse)
+
+;;; pdf-parse.el ends here

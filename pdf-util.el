@@ -1,3 +1,46 @@
+;;; pdf-util.el --- pdf parsing routines
+
+;; Copyright (C) 2010 Jason Feng
+
+;; Author: Jason Feng <jfeng1985@gmail.com>
+;; Maintainer: Jason Feng <jfeng1985@gmail.com>
+;; Created: 16 Aug 2010
+;; Keywords: docview pdf outline
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+;;
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with this program; if not, write to the Free Software
+;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+;;; Commentary:
+;; This code does somewhat useful things with PDF
+;; documents.  Namely, `pdf-outlines' extracts the document
+;; outlines of a PDF file and dumps them into a buffer.
+;; `pdf-outlines-goto' retreives an outline entry from the text
+;; properties at point, and jumps to that page in the doc-view
+;; buffer from which the outline was extracted.
+
+;; This code defines no key bindings, but the main entry
+;; point here is (`pdf-outlines' <pdf-doc>), where <pdf-doc>
+;; is a pdf-doc structure that has most likely been retreived
+;; using `pdf-init' defined in pdf-parse.el.  Recommended usage
+;; is to add a binding to doc-view-mode-map or something.
+
+;; This code is intended to be used with doc-view.  If doc-view doesn't
+;; exist, this code will not necessarily fail, but certainly won't be
+;; very useful.
+
+;;; Code:
+
 (eval-when-compile
   (require 'cl))
 
@@ -177,3 +220,5 @@ to whatever page it happens to be linked to."
 document that has been opened with docview.")
 
 (provide 'pdf-util)
+
+;;; pdf-util.el ends here
