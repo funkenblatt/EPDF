@@ -6,7 +6,8 @@
   (catalog)
   (objs)
   (buf)
-  (names))
+  (names)
+  (trailer))
 
 (defstruct (pdf-dict)
   (alist)
@@ -222,7 +223,8 @@ about anything else with the document."
       (goto-char (+ (pdf-read out) (point-min)))
       (let* ((junk (pdf-xrefs out))
 	     (trailer (aref junk 0)))
-	(setf (pdf-doc-xrefs out) (aref junk 1)
+	(setf (pdf-doc-trailer out) trailer
+	      (pdf-doc-xrefs out) (aref junk 1)
 	      (pdf-doc-catalog out) (pdf-dref trailer '/Root)))
       out)))
 
