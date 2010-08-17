@@ -1,7 +1,21 @@
 (eval-when-compile
   (require 'cl))
 
+(require 'outline)
 (require 'pdf-parse)
+
+(defun pdf-ref* (obj &rest refs)
+  "Descends a chain of links in a PDF datastructure.  For example,
+
+\t(pdf-refchain x '/Foo '/Bar 3)
+
+is equivalent to 
+
+\t(pdf-aref (pdf-dref (pdf-dref x '/Foo) '/Bar) 3)"
+  (dolist (i refs obj)
+    (if (integerp i)
+	(setq obj (pdf-aref obj i))
+      (setq obj (pdf-dref obj i)))))
 
 (defun pdf-dump (&rest args)
   (mapc (lambda (x) (princ x (current-buffer))) args))
@@ -33,7 +47,11 @@
      (when (pdf-dref x '/Title)
        (dotimes (i depth) (pdf-dump "*"))
        (dotimes (i depth) (pdf-dump " "))
-       (pdf-dump (pdf-dref x '/Title))
+       (let ((title (pdf-dref x '/Title)))
+	 (if (string= (substring title 0 2)
+		      "\xfe\xff")	;Check for byte-order mark
+	     (setq title (decode-coding-string title 'utf-16)))
+	 (pdf-dump title))
        (add-text-properties (line-beginning-position)
 			    (line-end-position)
 			    (list 'outline-obj x))
@@ -92,8 +110,7 @@
   "Find the page number that a particular outline entry
 refers to."
   (let ((dest (or (pdf-dref outline '/Dest)
-		  (pdf-dref (pdf-dref outline '/A)
-			    '/D)))
+		  (pdf-ref* outline '/A '/D)))
 	doc)
     (when (stringp dest)
       (setq dest 
@@ -116,11 +133,10 @@ the numerical page index of PAGE."
 	 tmp)
     (while node
       (if (eq (pdf-dref node '/Type) '/Page)
-	  (setq index 
-		(pdf-arrayfind
-		 (lambda (kid)
-		   (equal kid page))
-		 (pdf-dref (pdf-dref node '/Parent) '/Kids))
+	  (setq index (pdf-arrayfind
+		       (lambda (kid)
+			 (equal kid page))
+		       (pdf-ref* node '/Parent '/Kids))
 		node (pdf-dref node '/Parent))
 	(when (pdf-dref node '/Parent)
 	  (pdf-arrayfind
@@ -128,7 +144,7 @@ the numerical page index of PAGE."
 	     (unless (eq kid node)
 	       (incf index (pdf-dref kid '/Count)))
 	     (eq kid node))
-	   (pdf-dref (pdf-dref node '/Parent) '/Kids)
+	   (pdf-ref* node '/Parent '/Kids)
 	   t))
 	(setq node (pdf-dref node '/Parent))))
     (+ index 1)))
