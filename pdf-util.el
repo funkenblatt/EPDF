@@ -29,12 +29,10 @@
 ;; properties at point, and jumps to that page in the doc-view
 ;; buffer from which the outline was extracted.
 
-;; This code defines no key bindings, but the main entry
-;; point here is (`pdf-outlines' <pdf-doc>), where <pdf-doc>
-;; is a pdf-doc structure that has most likely been retreived
-;; using `pdf-init' defined in pdf-parse.el.  Recommended usage
-;; is to add a binding to doc-view-mode-map or something.
-
+;; The main usage of this library should be running
+;; 
+;;   M-x pdf-outlines RET
+;; 
 ;; This code is intended to be used with doc-view.  If doc-view doesn't
 ;; exist, this code will not necessarily fail, but certainly won't be
 ;; very useful.
@@ -63,9 +61,13 @@ is equivalent to
 (defun pdf-dump (&rest args)
   (mapc (lambda (x) (princ x (current-buffer))) args))
 
-(defun pdf-outlines (doc)
+(defun pdf-outlines (&optional doc)
+  "Dump the outlines from a PDF file into a buffer."
+  (interactive)
+  (if (not doc) (setq doc (pdf-init)))
   (if (pdf-dref (pdf-doc-catalog doc) '/Outlines)
-      (let* ((buf (get-buffer-create "*Outlines*")))
+      (let* ((buf (get-buffer-create 
+		   (format "*Outlines (%s)*" (buffer-name (pdf-doc-buf doc))))))
 	(with-current-buffer buf
 	  (setq buffer-read-only nil)
 	  (erase-buffer)
