@@ -46,11 +46,14 @@
   (names)
   (trailer))
 
-(defstruct (pdf-dict)
+(defstruct (pdf-obj)
+  oid)
+
+(defstruct (pdf-dict (:include pdf-obj))
   (alist)
   (doc))
 
-(defstruct (pdf-array)
+(defstruct (pdf-array (:include pdf-obj))
   (v)
   (doc))
 
@@ -64,7 +67,7 @@ because ?( screws up emacs's paren matching."
 and returns whatever that was.  Usually used for snarfing symbols
 like true, false, and null, etc."
   (byte-compile
-   `(lambda (doc)
+   `(lambda (doc &optional oid)
       (prog1
 	  (read (buffer-substring (point) (+ (point) ,n)))
 	(forward-char ,n)))))
@@ -82,29 +85,29 @@ like true, false, and null, etc."
      ("n" . ,(pdf-read-n 4))
      ("%" . pdf-comment-skip))))
 
-(defun pdf-read (doc)
+(defun pdf-read (doc &optional oid)
   "Read whatever PDF object may be at point in the current buffer."
   (pdf-skipws)
   (let* ((standard-input (current-buffer))
 	 (c (char-after (point)))
 	 (handler (assq c pdf-token-handlers)))
     (cond
-     (handler (funcall (cdr handler) doc))
+     (handler (funcall (cdr handler) doc oid))
      ((eq c ?<) (if (eq (char-after (+ (point) 1)) ?<)
-		    (pdf-readdict doc)
-		  (pdf-readhex doc)))
+		    (pdf-readdict doc oid)
+		  (pdf-readhex doc oid)))
      (t (pdf-readnum doc)))))
 
-(defun pdf-readnum (doc)
+(defun pdf-readnum (doc &optional oid)
   (read (progn (re-search-forward "[+-]?[0-9.]+")
 	       (match-string 0))))
 
-(defun pdf-readname (doc)
+(defun pdf-readname (doc &optional oid)
   (re-search-forward
    (rx "/" (* (not (any "%/()[]<>{} \x00\t\r\n\x0c")))))
   (intern (match-string 0)))
 
-(defun pdf-readstr (doc)
+(defun pdf-readstr (doc &optional oid)
   (forward-char 1)
   (let ((start (point))
 	(depth 1))
@@ -131,12 +134,12 @@ like true, false, and null, etc."
    " \x00\t\r\n\x0c")
   (point))
 
-(defun pdf-grab-til-char (doc c)
+(defun pdf-grab-til-char (doc c &optional oid)
   "Keep reading in PDF objects until the character C is encountered.
 Also handles indirect object references."
   (let (out)
     (while (/= (char-after (point)) c)
-      (push (pdf-read doc) out)
+      (push (pdf-read doc oid) out)
       (when (eq (car out) 'R)
 	(pop out)
 	(push (cons 'R (nreverse (list (pop out) (pop out))))
@@ -144,10 +147,10 @@ Also handles indirect object references."
       (pdf-skipws))
     out))
 
-(defun pdf-readarray (doc)
+(defun pdf-readarray (doc &optional oid)
   (forward-char 1)
   (pdf-skipws)
-  (let ((out (pdf-grab-til-char doc (pdf-chr "]"))))
+  (let ((out (pdf-grab-til-char doc (pdf-chr "]") oid)))
     (forward-char)
     (make-pdf-array :v (apply 'vector (nreverse out))
 		    :doc doc)))
@@ -155,10 +158,10 @@ Also handles indirect object references."
 (defun pdf-arraylen (a)
   (length (pdf-array-v a)))
 
-(defun pdf-readdict (doc)
+(defun pdf-readdict (doc &optional oid)
   (forward-char 2)
   (pdf-skipws)
-  (let ((tmp (pdf-grab-til-char doc (pdf-chr ">")))
+  (let ((tmp (pdf-grab-til-char doc (pdf-chr ">") oid))
 	out)
     (while tmp
       (push (cons (cadr tmp) (car tmp)) out)
@@ -166,7 +169,7 @@ Also handles indirect object references."
     (forward-char 2)
     (make-pdf-dict :alist out :doc doc)))
 
-(defun pdf-readhex (doc)
+(defun pdf-readhex (doc &optional oid)
   (forward-char)
   (let ((start (point))
 	(end (- (re-search-forward ">") 1)))
@@ -244,7 +247,7 @@ object instead of actually reading it."
 	    (search-forward "obj")
 	    (if noread
 		(point)
-	      (setq val (pdf-read doc))
+	      (setq val (pdf-read doc objref))
 	      (puthash objref val (pdf-doc-objs doc))
 	      val)))))))
 
