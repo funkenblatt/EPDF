@@ -1,3 +1,5 @@
+(require 'arc4)
+
 (setq pdf-crypto-padding 
       "\x28\xbf\x4e\x5e\x4e\x75\x8a\x41\x64\x00\x4e\x56\xff\xfa\x01\x08\x2e\x2e\x00\xb6\xd0\x68\x3e\x80\x2f\x0c\xa9\xfe\x64\x53\x69\x7a")
 
@@ -70,25 +72,4 @@
 
 "\xc2\x13\x6e\x30\xa2\xa8\xef\xe4\x2a\xf0\x04\x22\x96\xce\xf9\xc7"
 
-(defun rc4 (key str)
-  "RC4 encrypts/decrypts STR using KEY."
-  (let ((state (make-vector 256 0))
-	(i 0) (j 0) keybyte)
-    (dotimes (x 256) (aset state x x))
-    (rc4-key-sched state key)
-    (dotimes (x (length str) str)
-      (setq i (mod (1+ i) 256)
-	    j (mod (+ j (aref state i)) 256))
-      (rotatef (aref state i) (aref state j))
-      (setf keybyte (aref state (mod (+ (aref state i)
-					(aref state j)) 256))
-	    (aref str x) (logxor (aref str x) keybyte)))))
 
-(defun rc4-key-sched (rc4-state key)
-  "Arcfour key-scheduler: initialize state from key."
-  (let ((j 0) i)
-    (dotimes (i 256 rc4-state)
-      (setq j (% (+ j 
-                    (aref rc4-state i) 
-                    (aref key (% i (length key)))) 256))
-      (rotatef (aref rc4-state i) (aref rc4-state j)))))
