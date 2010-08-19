@@ -153,7 +153,8 @@ Also handles indirect object references."
   (let ((out (pdf-grab-til-char doc (pdf-chr "]") oid)))
     (forward-char)
     (make-pdf-array :v (apply 'vector (nreverse out))
-		    :doc doc)))
+		    :doc doc
+		    :oid oid)))
 
 (defun pdf-arraylen (a)
   (length (pdf-array-v a)))
@@ -167,7 +168,7 @@ Also handles indirect object references."
       (push (cons (cadr tmp) (car tmp)) out)
       (setq tmp (cddr tmp)))
     (forward-char 2)
-    (make-pdf-dict :alist out :doc doc)))
+    (make-pdf-dict :oid oid :alist out :doc doc)))
 
 (defun pdf-readhex (doc &optional oid)
   (forward-char)
