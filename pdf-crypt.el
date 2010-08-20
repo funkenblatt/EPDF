@@ -24,7 +24,7 @@
 	 (crypto (pdf-dref trailer '/Encrypt))
 	 (cksum (md5 (string-make-unibyte
 		      (concat pdf-crypto-padding
-			      (pdf-dref crypto '/O)
+			      (pdf-str-s (pdf-dref crypto '/O))
 			      (pdf-num-to-bytes (pdf-dref crypto '/P))
 			      (pdf-dehexify (cadr (pdf-ref* trailer '/ID 0)))))
 		     nil nil 'binary)))
@@ -32,18 +32,28 @@
       (setq cksum (pdf-dehexify cksum)
 	    cksum (md5 cksum)))))
 
-(defun pdf-decrypt (key objref data)
-  (let* ((onum (substring (pdf-num-to-bytes (cadr objref)) 0 3))
-	 (gnum (substring (pdf-num-to-bytes (caddr objref)) 0 2))
-	 (key (string-make-unibyte
-		    (concat key onum gnum)))
-	 (keylen (length key))
-	 (key (pdf-dehexify (md5 key))))
-    (rc4 (substring key 0 (min 16 (length key)))
-	 (copy-seq data))))
+(defun pdf-decrypt (s)
+  (if (pdf-doc-key (pdf-str-doc s))
+      (let* ((key (pdf-doc-key (pdf-str-doc s)))
+	     (data (pdf-str-s s))
+	     (objref (pdf-str-oid s))
+	     (onum (substring (pdf-num-to-bytes (cadr objref)) 0 3))
+	     (gnum (substring (pdf-num-to-bytes (caddr objref)) 0 2))
+	     (key (string-make-unibyte
+		   (concat key onum gnum)))
+	     (keylen (length key))
+	     (key (pdf-dehexify (md5 key))))
+	(setf (pdf-str-decrypted s) t
+	      (pdf-str-s s)
+	      (rc4 (substring key 0 (min 16 (length key)))
+		   (copy-seq data))))
+    (pdf-str-s s)))
 
 (defun pdf-rehexify (s)
   (apply 'concat
 	 (lc
 	  (format "\\x%02x" x) x
 	  (append s nil))))
+
+
+(provide 'pdf-crypt)

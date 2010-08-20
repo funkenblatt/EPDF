@@ -38,24 +38,28 @@
 (eval-when-compile
   (require 'cl))
 
+(require 'pdf-crypt)
+
 (defstruct (pdf-doc)
   (xrefs)
   (catalog)
   (objs)
   (buf)
   (names)
-  (trailer))
+  (trailer)
+  key)
 
 (defstruct (pdf-obj)
-  oid)
+  oid doc)
 
 (defstruct (pdf-dict (:include pdf-obj))
-  (alist)
-  (doc))
+  alist)
 
 (defstruct (pdf-array (:include pdf-obj))
-  (v)
-  (doc))
+  v)
+
+(defstruct (pdf-str (:include pdf-obj))
+  s decrypted)
 
 (defmacro pdf-chr (s) 
   "Converts a string literal into an integer literal.  Mainly used 
@@ -119,15 +123,18 @@ like true, false, and null, etc."
       (unless (= (aref (match-string 0) 0) ?\\)
 	(incf depth
 	      (if (equal (match-string 0) "(") 1 -1))))
-    (replace-regexp-in-string
-     (rx "\\" (or (repeat 3 (any (?0 . ?9)))
-		  (any "\nntrbf()\\")))
-     (lambda (m)
-       (if (string= m "\\\n")
-	   ""
-	 (read (concat "\"" m "\""))))
-     (buffer-substring start (- (point) 1))
-     nil t)))
+    (make-pdf-str
+     :s (replace-regexp-in-string
+	 (rx "\\" (or (repeat 3 (any (?0 . ?9)))
+		      (any "\nntrbf()\\")))
+	 (lambda (m)
+	   (if (string= m "\\\n")
+	       ""
+	     (read (concat "\"" m "\""))))
+	 (buffer-substring start (- (point) 1))
+	 nil t)
+     :oid oid :doc doc
+     :decrypted (not (pdf-doc-key doc)))))
 
 (defun pdf-skipws ()
   (skip-chars-forward
@@ -200,6 +207,19 @@ which see."
 	(pdf-getxref (pdf-array-doc arr) out noread)
       out)))
 
+(defun pdf-ref* (obj &rest refs)
+  "Descends a chain of links in a PDF datastructure.  For example,
+
+\t(pdf-refchain x '/Foo '/Bar 3)
+
+is equivalent to 
+
+\t(pdf-aref (pdf-dref (pdf-dref x '/Foo) '/Bar) 3)"
+  (dolist (i refs obj)
+    (if (integerp i)
+	(setq obj (pdf-aref obj i))
+      (setq obj (pdf-dref obj i)))))
+
 (defun pdf-xrefs (doc)
   "Retreive the document's cross reference tables."
   (read (current-buffer)) 		;skip "xref" token
@@ -266,7 +286,9 @@ about anything else with the document."
 	     (trailer (aref junk 0)))
 	(setf (pdf-doc-trailer out) trailer
 	      (pdf-doc-xrefs out) (aref junk 1)
-	      (pdf-doc-catalog out) (pdf-dref trailer '/Root)))
+	      (pdf-doc-catalog out) (pdf-dref trailer '/Root)
+	      (pdf-doc-key out) (and (pdf-dref trailer '/Encrypt)
+				     (pdf-getkey out))))
       out)))
 
 (provide 'pdf-parse)

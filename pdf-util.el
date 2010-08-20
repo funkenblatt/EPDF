@@ -45,19 +45,6 @@
 (require 'outline)
 (require 'pdf-parse)
 
-(defun pdf-ref* (obj &rest refs)
-  "Descends a chain of links in a PDF datastructure.  For example,
-
-\t(pdf-refchain x '/Foo '/Bar 3)
-
-is equivalent to 
-
-\t(pdf-aref (pdf-dref (pdf-dref x '/Foo) '/Bar) 3)"
-  (dolist (i refs obj)
-    (if (integerp i)
-	(setq obj (pdf-aref obj i))
-      (setq obj (pdf-dref obj i)))))
-
 (defun pdf-dump (&rest args)
   (mapc (lambda (x) (princ x (current-buffer))) args))
 
@@ -92,7 +79,7 @@ is equivalent to
      (when (pdf-dref x '/Title)
        (dotimes (i depth) (pdf-dump "*"))
        (dotimes (i depth) (pdf-dump " "))
-       (let ((title (pdf-dref x '/Title)))
+       (let ((title (pdf-decrypt (pdf-dref x '/Title))))
 	 (if (and (> (length title) 1)
 		  (string= (substring title 0 2)
 		      "\xfe\xff"))	;Check for byte-order mark
@@ -105,6 +92,7 @@ is equivalent to
    (pdf-dref (pdf-doc-catalog doc) '/Outlines)))
 
 (defun pdf-lookup-dest (doc dest)
+  (setq dest (pdf-decrypt dest))
   (when (not (pdf-doc-names doc))
     (setf (pdf-doc-names doc) (make-hash-table :test 'equal)))
   (let ((out (gethash dest (pdf-doc-names doc))))
@@ -139,16 +127,16 @@ is equivalent to
 		      (pdf-arrayfind
 		       (lambda (kid)
 			 (setq limits (pdf-dref kid '/Limits)
-			       lbound (pdf-aref limits 0)
-			       ubound (pdf-aref limits 1))
+			       lbound (pdf-decrypt (pdf-aref limits 0))
+			       ubound (pdf-decrypt (pdf-aref limits 1)))
 			 (string-between name lbound ubound))
 		       kids t))
 		(setq ntree (pdf-aref kids ix))
 	      (throw 'break nil))
 	  (setq kids (pdf-dref ntree '/Names)
 		ix (pdf-arrayfind (lambda (kid)
-				    (if (stringp kid)
-					(string= kid name)))
+				    (if (pdf-str-p kid)
+					(string= (pdf-decrypt kid) name)))
 				  kids))
 	  (throw 'break (pdf-aref kids (+ ix 1))))))))
 
@@ -158,7 +146,7 @@ refers to."
   (let ((dest (or (pdf-dref outline '/Dest)
 		  (pdf-ref* outline '/A '/D)))
 	doc)
-    (when (stringp dest)
+    (when (pdf-str-p dest)
       (setq dest 
 	    (pdf-lookup-dest
 	     (pdf-dict-doc outline)
