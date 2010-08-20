@@ -10,13 +10,10 @@
       (setq n (ash n -8))) 
     (string-make-unibyte (concat (nreverse out)))))
 
-(rdump (pdf-aref (pdf-dref (pdf-doc-trailer doc) '/ID) 0))
-(hex "C2136E30A2A8EFE42AF0042296CEF9C7")
-
 (defun pdf-dehexify (s)
   (string-make-unibyte
    (replace-regexp-in-string
-    "[0-9A-Fa-f]\\{2\\}"
+    "[ \t\r\n\x00\x0c]*[0-9A-Fa-f]\\{2\\}[ \t\r\n\x00\x0c]*"
     (lambda (m)
       (char-to-string
        (string-to-number m 16)))
@@ -45,31 +42,8 @@
     (rc4 (substring key 0 (min 16 (length key)))
 	 (copy-seq data))))
 
-(let: cksum (md5
-	     (string-make-unibyte
-	      (concat pdf-crypto-padding
-		      (pdf-dref cryptowad '/O)
-		      (pdf-num-to-bytes (pdf-dref cryptowad '/P))
-		      (pdf-dehexify (cadr (pdf-aref (pdf-dref (pdf-doc-trailer doc) '/ID) 0)))))
-	     nil nil 'binary) in
-  (dotimes (i 50)
-    (setq cksum (pdf-dehexify cksum)
-	  cksum (md5 cksum)))
-  (pdf-dehexify cksum))
-
 (defun pdf-rehexify (s)
   (apply 'concat
 	 (lc
 	  (format "\\x%02x" x) x
 	  (append s nil))))
-
-(dump
-(pdf-rehexify (pdf-dref cryptowad '/O)))
-"\x8c\xcd\xb6\x8a\x9c\xd1\x78\x82\x43\x72\x9a\xcc\xc8\x77\xb1\x70\x77\x78\xbb\x22\xb2\x0a\xce\x49\xb8\xd6\xc3\x4c\x3d\x46\x09\x7d"
-
-(dump
-(pdf-rehexify "\302n0\242\250\357\344*\360\"\226\316\371\307"))
-
-"\xc2\x13\x6e\x30\xa2\xa8\xef\xe4\x2a\xf0\x04\x22\x96\xce\xf9\xc7"
-
-
