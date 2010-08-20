@@ -48,7 +48,7 @@
 (defun pdf-dump (&rest args)
   (mapc (lambda (x) (princ x (current-buffer))) args))
 
-(defun pdf-outlines (&optional doc)
+(defun pdf-outlines (&optional doc maxdepth)
   "Dump the outlines from a PDF file into a buffer."
   (interactive)
   (if (not doc) (setq doc (pdf-init)))
@@ -58,22 +58,24 @@
 	(with-current-buffer buf
 	  (setq buffer-read-only nil)
 	  (erase-buffer)
-	  (pdf-dump-outlines doc)
+	  (pdf-dump-outlines doc maxdepth)
 	  (goto-char (point-min))
 	  (pdf-outline-mode)
 	  (call-interactively 'hide-sublevels)      
 	  (setq buffer-read-only t))
 	(pop-to-buffer buf))))
 
-(defun pdf-map-outlines (proc outlines &optional depth)
+(defun pdf-map-outlines (proc outlines &optional depth maxdepth)
   (if (not depth) (setq depth 0))
   (while outlines
     (funcall proc outlines depth)
-    (when (pdf-dref outlines '/First)
-      (pdf-map-outlines proc (pdf-dref outlines '/First) (+ depth 1)))
+    (when (and (pdf-dref outlines '/First)
+	       (or (not maxdepth) (> maxdepth 0)))
+      (pdf-map-outlines proc (pdf-dref outlines '/First) 
+			(+ depth 1) (and maxdepth (- maxdepth 1))))
     (setq outlines (pdf-dref outlines '/Next))))
 
-(defun pdf-dump-outlines (doc)
+(defun pdf-dump-outlines (doc &optional maxdepth)
   (pdf-map-outlines
    (lambda (x depth)
      (when (pdf-dref x '/Title)
@@ -89,7 +91,8 @@
 			    (line-end-position)
 			    (list 'outline-obj x))
        (pdf-dump "\n")))
-   (pdf-dref (pdf-doc-catalog doc) '/Outlines)))
+   (pdf-dref (pdf-doc-catalog doc) '/Outlines)
+   nil maxdepth))
 
 (defun pdf-lookup-dest (doc dest)
   (setq dest (pdf-decrypt dest))

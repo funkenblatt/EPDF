@@ -33,7 +33,7 @@
 	    cksum (md5 cksum)))))
 
 (defun pdf-decrypt (s)
-  (if (pdf-doc-key (pdf-str-doc s))
+  (if (not (pdf-str-decrypted s))
       (let* ((key (pdf-doc-key (pdf-str-doc s)))
 	     (data (pdf-str-s s))
 	     (objref (pdf-str-oid s))
