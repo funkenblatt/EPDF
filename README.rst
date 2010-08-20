@@ -12,7 +12,7 @@ using docview-mode.
 Things it does not do:
 
 * Work in a robust manner
-* Deal with encrypted documents of any kind
+* Work with any encryption other than the standard handler (and incompletely at that)
 * Anything particularly useful
 
 I'm concentrating on that last bullet item at the moment.
