@@ -154,6 +154,11 @@ refers to."
 	    (pdf-lookup-dest
 	     (pdf-dict-doc outline)
 	     dest)))
+    (when (symbolp dest)
+      (setq dest
+	    (pdf-ref*
+	     (pdf-doc-catalog (pdf-dict-doc outline))
+	     '/Dests dest)))
     (cond
      ((pdf-array-p dest) (setq doc (pdf-array-doc dest)
 			       dest (pdf-aref dest 0 t)))
