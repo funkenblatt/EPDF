@@ -51,9 +51,9 @@
 
 (defun pdf-rehexify (s)
   (apply 'concat
-	 (lc
-	  (format "\\x%02x" x) x
+	 (mapcar
+	  (lambda (x)
+	    (format "\\x%02x" x))
 	  (append s nil))))
-
 
 (provide 'pdf-crypt)
