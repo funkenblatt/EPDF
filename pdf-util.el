@@ -206,8 +206,24 @@ to whatever page it happens to be linked to."
   (let ((km (make-sparse-keymap)))
     (set-keymap-parent km outline-mode-map)
     (define-key km (kbd "RET") 'pdf-outline-goto)
+    (define-key km [mouse-2] 'pdf-mouse2-toggle-hide)
+    (define-key km [mouse-1] 'pdf-mouse-goto)
     km)
   "Keymap for pdf-outline viewer.")
+
+(defun pdf-mouse-goto (e)
+  (interactive "e")
+  (mouse-set-point e)
+  (pdf-outline-goto))
+
+(defun pdf-mouse2-toggle-hide (e)
+  (interactive "e")
+  (mouse-set-point e)
+  (if (save-excursion 
+	(forward-line)
+	(overlays-at (point)))
+      (show-children)
+    (hide-subtree)))
 
 (define-derived-mode
   pdf-outline-mode
