@@ -184,7 +184,7 @@ the numerical page index of PAGE."
 	  (pdf-arrayfind
 	   (lambda (kid)
 	     (unless (eq kid node)
-	       (incf index (pdf-dref kid '/Count)))
+	       (incf index (or (pdf-dref kid '/Count) 1)))
 	     (eq kid node))
 	   (pdf-ref* node '/Parent '/Kids)
 	   t))
