@@ -170,26 +170,18 @@ refers to."
 (defun pdf-find-pageno (doc page)
   "Takes document DOC and indirect reference PAGE, and finds
 the numerical page index of PAGE."
-  (let* ((index 0)
-	 (node (pdf-getxref doc page))
-	 tmp)
-    (while node
-      (if (eq (pdf-dref node '/Type) '/Page)
-	  (setq index (pdf-arrayfind
-		       (lambda (kid)
-			 (equal kid page))
-		       (pdf-ref* node '/Parent '/Kids))
-		node (pdf-dref node '/Parent))
-	(when (pdf-dref node '/Parent)
-	  (pdf-arrayfind
-	   (lambda (kid)
-	     (unless (eq kid node)
-	       (incf index (or (pdf-dref kid '/Count) 1)))
-	     (eq kid node))
-	   (pdf-ref* node '/Parent '/Kids)
-	   t))
-	(setq node (pdf-dref node '/Parent))))
-    (+ index 1)))
+  (let* ((ix 0)
+	 (node (pdf-getxref doc page)))
+    (while (and node (pdf-dref node '/Parent))
+      (pdf-arrayfind
+       (lambda (k)
+         (unless (eq k node)
+           (incf ix (or (pdf-dref k '/Count) 1)))
+         (eq k node))
+       (pdf-ref* node '/Parent '/Kids)
+       t)
+      (setf node (pdf-dref node '/Parent)))
+    (+ ix 1)))
 
 (defun pdf-outline-goto ()
   "Looks up the outline object property at point, and goes
