@@ -179,9 +179,13 @@ Also handles indirect object references."
 
 (defun pdf-readhex (doc &optional oid)
   (forward-char)
-  (let ((start (point))
-	(end (- (re-search-forward ">") 1)))
-    (list 'hex (buffer-substring start end))))
+  (let* ((start (point))
+         (end (- (re-search-forward ">") 1))
+         (data (buffer-substring start end))
+         (unhexed (pdf-dehexify data)))
+    (make-pdf-str
+     :s unhexed :oid oid :doc doc
+     :decrypted (not (pdf-doc-key doc)))))
 
 (defun pdf-dref (dict key &optional noderef noread)
   "Retreive an item from a PDF dict.  If the value stored
